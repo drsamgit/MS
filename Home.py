@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 from utils.firestore_utils import add_user_to_project
-from streamlit_javascript import st_javascript
 
 FIREBASE_WEB_API_KEY = "AIzaSyBQX6G7pAL09QjoZNBIzuDlpzQ8gpGVZOs"
 
@@ -20,7 +19,7 @@ def firebase_send_password_reset(email):
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_WEB_API_KEY}"
     return requests.post(url, json={"requestType": "PASSWORD_RESET", "email": email}).json()
 
-# rerun handler
+# Handle rerun request
 if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
     st.session_state.needs_rerun = False
     st.experimental_rerun()
@@ -39,7 +38,7 @@ if st.session_state.logged_in:
         st.session_state.clear()
         st.experimental_rerun()
 else:
-    choice = st.selectbox("Choose Action", ["Signup", "Login", "Forgot Password", "Login with Google"])
+    choice = st.selectbox("Choose Action", ["Signup", "Login", "Forgot Password"])
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
@@ -47,9 +46,9 @@ else:
         if st.button("Create Account"):
             res = firebase_sign_up(email, password)
             if "idToken" in res:
-                st.success("Account created successfully! Now login below.")
+                st.success("✅ Account created successfully! Now go to Login.")
             else:
-                st.error(res.get("error", {}).get("message", "Signup failed"))
+                st.error(res.get("error", {}).get("message", "Signup failed."))
 
     elif choice == "Login":
         st.info("You must sign up first before logging in.")
@@ -61,17 +60,12 @@ else:
                 st.session_state.needs_rerun = True
                 st.success("Login successful. Reloading...")
             else:
-                st.error(res.get("error", {}).get("message", "Login failed"))
+                st.error(res.get("error", {}).get("message", "Login failed."))
 
     elif choice == "Forgot Password":
         if st.button("Send Reset Email"):
             res = firebase_send_password_reset(email)
             if "email" in res:
-                st.success("Password reset email sent")
+                st.success("Password reset email sent.")
             else:
-                st.error(res.get("error", {}).get("message", "Error sending reset email"))
-
-    elif choice == "Login with Google":
-        st.warning("Google login via popup coming soon in browser version.")
-        st.markdown("[Login with Google](https://accounts.google.com)")
-
+                st.error(res.get("error", {}).get("message", "Reset failed."))
