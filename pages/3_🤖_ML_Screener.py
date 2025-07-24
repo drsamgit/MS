@@ -9,11 +9,14 @@ st.title("🤖 ML-Assisted Screening")
 project_id = st.text_input("Enter Project ID")
 user_email = st.text_input("Enter Your Email")
 
-refs = st.session_state.get(f"refs_{project_id}", get_references(project_id))
+if st.button("Load References"):
+    st.session_state[f"refs_{project_id}"] = get_references(project_id)
+
+refs = st.session_state.get(f"refs_{project_id}", [])
 decisions = get_decisions(project_id)
 
 if not refs or not decisions:
-    st.warning("Insufficient data to train ML model.")
+    st.warning("Insufficient data to train ML model. Click 'Load References' if needed.")
 else:
     labeled_data = [(int(k.split('_')[0].split('ref_')[1]), v['decision']) for k, v in decisions.items() if user_email in k]
     if not labeled_data:
