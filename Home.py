@@ -36,15 +36,15 @@ def fetch_user_projects(email):
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# Rerun prompt
+# 🔄 Safe redirect after login
 if st.session_state.get("needs_rerun"):
-    st.success("✅ Login successful! Please click Reload below to continue.")
-    if st.button("🔄 Reload Now"):
-        st.session_state.needs_rerun = False
-        st.experimental_rerun()
+    st.success("✅ Login successful! You can now continue.")
+    st.session_state.needs_rerun = False
+    if st.button("➡️ Continue to Import References"):
+        st.switch_page("pages/1_📁_Import_References.py")
     st.stop()
 
-# Main app
+# 🧑 Authenticated UI
 if st.session_state.logged_in:
     st.success(f"✅ Logged in as {st.session_state.email}")
     user_email = st.session_state.email
@@ -70,6 +70,7 @@ if st.session_state.logged_in:
         st.session_state.clear()
         st.experimental_rerun()
 
+# 🔐 Login/Signup UI
 else:
     choice = st.selectbox("Choose Action", ["Signup", "Login", "Forgot Password"])
     email = st.text_input("Email")
@@ -91,7 +92,7 @@ else:
                 st.session_state.logged_in = True
                 st.session_state.email = res["email"]
                 st.session_state.needs_rerun = True
-                st.success("Login successful! Click Reload Now to continue.")
+                st.success("Login successful.")
             else:
                 st.error(res.get("error", {}).get("message", "Login failed."))
 
