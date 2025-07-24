@@ -36,12 +36,12 @@ def fetch_user_projects(email):
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# 🔄 Safe redirect after login
+# 🔄 Safe navigation after login
 if st.session_state.get("needs_rerun"):
     st.success("✅ Login successful! You can now continue.")
     st.session_state.needs_rerun = False
     if st.button("➡️ Continue to Import References"):
-        st.switch_page("pages/1_📁_Import_References.py")
+        st.switch_page("📁 Import References")
     st.stop()
 
 # 🧑 Authenticated UI
