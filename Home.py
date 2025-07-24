@@ -3,6 +3,7 @@ import requests
 import firebase_admin
 from firebase_admin import firestore
 from utils.firestore_utils import add_user_to_project
+import time
 
 FIREBASE_WEB_API_KEY = "AIzaSyBQX6G7pAL09QjoZNBIzuDlpzQ8gpGVZOs"
 db = firestore.client()
@@ -32,17 +33,27 @@ def fetch_user_projects(email):
             project_ids.append(proj_id)
     return project_ids
 
-# Session initialization
+# Safe delayed rerun (must be last)
+if st.session_state.get("needs_rerun"):
+    st.session_state.needs_rerun = False
+    time.sleep(0.5)
+    st.experimental_rerun()
+
+# Session init
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# MAIN APP
+# Main app
 if st.session_state.logged_in:
     st.success(f"✅ Logged in as {st.session_state.email}")
     user_email = st.session_state.email
     existing_projects = fetch_user_projects(user_email)
 
-    project_choice = st.selectbox("Select a Project or Create New", ["-- Create New Project --"] + existing_projects)
+    if existing_projects:
+        project_choice = st.selectbox("Select a Project or Create New", ["-- Create New Project --"] + existing_projects)
+    else:
+        st.info("ℹ️ You have no projects yet. Please create a new one.")
+        project_choice = "-- Create New Project --"
 
     if project_choice == "-- Create New Project --":
         new_project = st.text_input("🆕 Enter New Project Name")
@@ -80,7 +91,6 @@ else:
                 st.session_state.email = res["email"]
                 st.session_state.needs_rerun = True
                 st.success("Login successful. Reloading...")
-
             else:
                 st.error(res.get("error", {}).get("message", "Login failed."))
 
@@ -91,10 +101,3 @@ else:
                 st.success("Password reset email sent.")
             else:
                 st.error(res.get("error", {}).get("message", "Reset failed."))
-
-# ✅ Safe delayed rerun at bottom
-import time
-if st.session_state.get("needs_rerun"):
-    st.session_state.needs_rerun = False
-    time.sleep(0.5)
-    st.experimental_rerun()
