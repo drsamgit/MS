@@ -23,7 +23,8 @@ def save_reference(project_id, ref_id, reference):
 
 def get_references(project_id):
     ref_col = db.collection("projects").document(project_id).collection("references")
-    return [doc.to_dict() for doc in ref_col.stream()]
+    refs = [doc.to_dict() for doc in ref_col.stream()]
+    return refs
 
 def get_users(project_id):
     return [doc.id for doc in db.collection("projects").document(project_id).collection("users").stream()]
