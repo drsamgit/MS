@@ -6,9 +6,12 @@ st.title("📝 Manual Screening")
 project_id = st.text_input("Enter Project ID")
 user_email = st.text_input("Enter Your Email")
 
-refs = st.session_state.get(f"refs_{project_id}", get_references(project_id))
+if st.button("Load References"):
+    st.session_state[f"refs_{project_id}"] = get_references(project_id)
+
+refs = st.session_state.get(f"refs_{project_id}", [])
 if not refs:
-    st.warning("No references found for this project.")
+    st.warning("No references found for this project. Please upload or load them.")
 else:
     index = st.session_state.get(f'current_index_{project_id}', 0)
     if index < len(refs):
