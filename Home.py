@@ -1,22 +1,28 @@
 import streamlit as st
-import pyrebase
+import requests
 from utils.firestore_utils import add_user_to_project
 
-firebase_config = {
-    "apiKey": "AIzaSyBxwUgXCEqtRC0oRZbYDJmd07Q7JKC3dqI",
-    "authDomain": "metascreenerml.firebaseapp.com",
-    "projectId": "metascreenerml",
-    "storageBucket": "metascreenerml.appspot.com",
-    "messagingSenderId": "1071939977886",
-    "appId": "1:1071939977886:web:b356bcf1eea0c2df98fc63"
-}
-
-firebase = pyrebase.initialize_app(firebase_config)
-auth = firebase.auth()
+FIREBASE_WEB_API_KEY = "AIzaSyBxwUgXCEqtRC0oRZbYDJmd07Q7JKC3dqI"
 
 st.set_page_config(page_title="MetaScreener ML")
-
 st.title("🔐 MetaScreener ML Login")
+
+def firebase_sign_in(email, password):
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_WEB_API_KEY}"
+    payload = {
+        "email": email,
+        "password": password,
+        "returnSecureToken": True
+    }
+    return requests.post(url, json=payload).json()
+
+def firebase_sign_up(email, password):
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_WEB_API_KEY}"
+    return requests.post(url, json={"email": email, "password": password, "returnSecureToken": True}).json()
+
+def firebase_send_password_reset(email):
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_WEB_API_KEY}"
+    return requests.post(url, json={"requestType": "PASSWORD_RESET", "email": email}).json()
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -31,8 +37,6 @@ if st.session_state.logged_in:
     if st.button("🚪 Logout"):
         st.session_state.clear()
         st.experimental_rerun()
-    st.markdown("---")
-    st.info("Use the sidebar to navigate to any page once project is assigned.")
 else:
     choice = st.selectbox("Choose Action", ["Login", "Signup", "Forgot Password"])
     email = st.text_input("Email")
@@ -40,25 +44,25 @@ else:
 
     if choice == "Signup":
         if st.button("Create Account"):
-            try:
-                auth.create_user_with_email_and_password(email, password)
+            res = firebase_sign_up(email, password)
+            if "idToken" in res:
                 st.success("Account created successfully!")
-            except Exception as e:
-                st.error(str(e))
+            else:
+                st.error(res.get("error", {}).get("message", "Signup failed"))
     elif choice == "Forgot Password":
         if st.button("Send Reset Email"):
-            try:
-                auth.send_password_reset_email(email)
+            res = firebase_send_password_reset(email)
+            if "email" in res:
                 st.success("Password reset email sent")
-            except Exception as e:
-                st.error(str(e))
-    else:  # Login
+            else:
+                st.error(res.get("error", {}).get("message", "Error sending reset email"))
+    else:
         if st.button("Login"):
-            try:
-                user = auth.sign_in_with_email_and_password(email, password)
+            res = firebase_sign_in(email, password)
+            if "idToken" in res:
                 st.session_state.logged_in = True
-                st.session_state.email = email
+                st.session_state.email = res["email"]
                 st.success("Login successful")
                 st.experimental_rerun()
-            except Exception as e:
-                st.error(str(e))
+            else:
+                st.error(res.get("error", {}).get("message", "Login failed"))
