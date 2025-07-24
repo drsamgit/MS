@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from utils.firestore_utils import add_user_to_project
 
-FIREBASE_WEB_API_KEY = "AIzaSyBxwUgXCEqtRC0oRZbYDJmd07Q7JKC3dqI"
+FIREBASE_WEB_API_KEY = "AIzaSyBQX6G7pAL09QjoZNBIzuDlpzQ8gpGVZOs"
 
 st.set_page_config(page_title="MetaScreener ML")
 st.title("🔐 MetaScreener ML Login")
@@ -49,6 +49,7 @@ else:
                 st.success("Account created successfully!")
             else:
                 st.error(res.get("error", {}).get("message", "Signup failed"))
+
     elif choice == "Forgot Password":
         if st.button("Send Reset Email"):
             res = firebase_send_password_reset(email)
@@ -56,7 +57,8 @@ else:
                 st.success("Password reset email sent")
             else:
                 st.error(res.get("error", {}).get("message", "Error sending reset email"))
-    else:
+
+    else:  # Login
         if st.button("Login"):
             res = firebase_sign_in(email, password)
             if "idToken" in res:
@@ -66,3 +68,6 @@ else:
                 st.experimental_rerun()
             else:
                 st.error(res.get("error", {}).get("message", "Login failed"))
+
+    st.markdown("---")
+    st.markdown("👉 Or use [Google login (coming soon)]()")
