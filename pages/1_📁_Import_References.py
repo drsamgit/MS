@@ -30,4 +30,5 @@ if uploaded_file:
         for i, row in df.iterrows():
             ref_id = f"ref_{i}"
             save_reference(project_id, ref_id, row.to_dict())
+        st.session_state[f"refs_{project_id}"] = df.to_dict(orient="records")
         st.success("References saved to Firestore")
