@@ -1,8 +1,11 @@
 import streamlit as st
 import requests
 from utils.firestore_utils import add_user_to_project
+import firebase_admin
+from firebase_admin import firestore
 
 FIREBASE_WEB_API_KEY = "AIzaSyBQX6G7pAL09QjoZNBIzuDlpzQ8gpGVZOs"
+db = firestore.client()
 
 st.set_page_config(page_title="MetaScreener ML")
 st.title("🔐 MetaScreener ML Login")
@@ -24,20 +27,43 @@ def firebase_send_password_reset(email):
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_WEB_API_KEY}"
     return requests.post(url, json={"requestType": "PASSWORD_RESET", "email": email}).json()
 
+def fetch_user_projects(email):
+    project_ids = []
+    for doc in db.collection("projects").stream():
+        proj_id = doc.id
+        members = db.collection("projects").document(proj_id).collection("users").stream()
+        if any(m.id == email for m in members):
+            project_ids.append(proj_id)
+    return project_ids
+
+# Track login state
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# 🔒 Show project selector if logged in
 if st.session_state.logged_in:
     st.success(f"✅ Logged in as {st.session_state.email}")
-    project_id = st.text_input("Assign or Enter Project Name", key="project_entry")
-    if project_id:
-        st.session_state.project_id = project_id
-        add_user_to_project(project_id, st.session_state.email)
-        st.success(f"You are now assigned to project `{project_id}` as reviewer.")
+    user_email = st.session_state.email
+    existing_projects = fetch_user_projects(user_email)
+
+    project_choice = st.selectbox("Select a Project or Create New", ["-- Create New Project --"] + existing_projects)
+
+    if project_choice == "-- Create New Project --":
+        new_project = st.text_input("🆕 Enter New Project Name")
+        if new_project:
+            st.session_state.project_id = new_project
+            add_user_to_project(new_project, user_email)
+            st.success(f"✅ Project `{new_project}` created and assigned.")
+    else:
+        st.session_state.project_id = project_choice
+        st.success(f"✅ Switched to project `{project_choice}`.")
+
     if st.button("🚪 Logout"):
         st.session_state.clear()
         st.experimental_rerun()
+
 else:
+    # 📧 Email login/signup logic
     choice = st.selectbox("Choose Action", ["Signup", "Login", "Forgot Password"])
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
@@ -46,7 +72,7 @@ else:
         if st.button("Create Account"):
             res = firebase_sign_up(email, password)
             if "idToken" in res:
-                st.success("✅ Account created successfully! Now go to Login.")
+                st.success("✅ Account created! Now log in.")
             else:
                 st.error(res.get("error", {}).get("message", "Signup failed."))
 
