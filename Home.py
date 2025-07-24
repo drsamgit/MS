@@ -7,6 +7,11 @@ FIREBASE_WEB_API_KEY = "AIzaSyBQX6G7pAL09QjoZNBIzuDlpzQ8gpGVZOs"
 st.set_page_config(page_title="MetaScreener ML")
 st.title("🔐 MetaScreener ML Login")
 
+# ✅ Safe rerun if needed
+if st.session_state.get("needs_rerun"):
+    st.session_state.needs_rerun = False
+    st.experimental_rerun()
+
 def firebase_sign_up(email, password):
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_WEB_API_KEY}"
     return requests.post(url, json={"email": email, "password": password, "returnSecureToken": True}).json()
@@ -18,11 +23,6 @@ def firebase_sign_in(email, password):
 def firebase_send_password_reset(email):
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_WEB_API_KEY}"
     return requests.post(url, json={"requestType": "PASSWORD_RESET", "email": email}).json()
-
-# Handle rerun request
-if "needs_rerun" in st.session_state and st.session_state.needs_rerun:
-    st.session_state.needs_rerun = False
-    st.experimental_rerun()
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
