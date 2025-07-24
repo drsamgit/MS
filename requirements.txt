@@ -1,0 +1,8 @@
+streamlit
+pandas
+scikit-learn
+firebase-admin
+pyrebase4
+rispy
+nbib
+python-dotenv
