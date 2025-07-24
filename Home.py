@@ -23,7 +23,7 @@ def firebase_send_password_reset(email):
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# After login
+# 🔄 Safe navigation after login
 if st.session_state.get("needs_rerun"):
     st.success("✅ Login successful! You can now continue.")
     st.session_state.needs_rerun = False
@@ -31,14 +31,15 @@ if st.session_state.get("needs_rerun"):
         st.switch_page("📁 Import References")
     st.stop()
 
-# If already logged in
+# ✅ Already logged in
 if st.session_state.logged_in:
     st.success(f"✅ Logged in as {st.session_state.email}")
     if st.button("🚪 Logout"):
         st.session_state.clear()
-        st.experimental_rerun()
+        st.success("🔁 Logged out. Please reload or return via sidebar.")
+        st.stop()
 
-# Login / Signup / Reset
+# 🔐 Login/Signup UI
 else:
     choice = st.selectbox("Choose Action", ["Signup", "Login", "Forgot Password"])
     email = st.text_input("Email")
