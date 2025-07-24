@@ -3,7 +3,6 @@ import requests
 import firebase_admin
 from firebase_admin import firestore
 from utils.firestore_utils import add_user_to_project
-import time
 
 FIREBASE_WEB_API_KEY = "AIzaSyBQX6G7pAL09QjoZNBIzuDlpzQ8gpGVZOs"
 db = firestore.client()
@@ -33,15 +32,17 @@ def fetch_user_projects(email):
             project_ids.append(proj_id)
     return project_ids
 
-# Safe delayed rerun (must be last)
-if st.session_state.get("needs_rerun"):
-    st.session_state.needs_rerun = False
-    time.sleep(0.5)
-    st.experimental_rerun()
-
 # Session init
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+
+# Rerun prompt
+if st.session_state.get("needs_rerun"):
+    st.success("✅ Login successful! Please click Reload below to continue.")
+    if st.button("🔄 Reload Now"):
+        st.session_state.needs_rerun = False
+        st.experimental_rerun()
+    st.stop()
 
 # Main app
 if st.session_state.logged_in:
@@ -90,7 +91,7 @@ else:
                 st.session_state.logged_in = True
                 st.session_state.email = res["email"]
                 st.session_state.needs_rerun = True
-                st.success("Login successful. Reloading...")
+                st.success("Login successful! Click Reload Now to continue.")
             else:
                 st.error(res.get("error", {}).get("message", "Login failed."))
 
