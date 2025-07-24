@@ -10,15 +10,15 @@ db = firestore.client()
 st.set_page_config(page_title="Import References")
 st.title("📁 Import References")
 
-# 🔐 Ensure user is logged in
+# Ensure logged in
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.warning("Please login from the Home page.")
+    st.warning("🔒 Please login from the Home page.")
     st.stop()
 
 email = st.session_state.email
-existing_projects = []
 
-# 🔍 Find all projects this user is part of
+# Fetch projects for user
+existing_projects = []
 projects_col = db.collection("projects")
 for doc in projects_col.stream():
     proj_id = doc.id
@@ -26,6 +26,7 @@ for doc in projects_col.stream():
     if any(m.id == email for m in members):
         existing_projects.append(proj_id)
 
+# Project selector
 project_choice = st.selectbox("Select a Project or Create New", ["-- Create New Project --"] + existing_projects)
 
 if project_choice == "-- Create New Project --":
@@ -36,17 +37,17 @@ if project_choice == "-- Create New Project --":
         st.success(f"✅ Project `{new_proj}` created and assigned.")
 else:
     st.session_state.project_id = project_choice
-    st.success(f"✅ Switched to project `{project_choice}`.")
+    st.success(f"✅ Using project `{project_choice}`.")
 
-# ✅ Show current project
+# Confirm project assigned
 if "project_id" not in st.session_state:
     st.stop()
 
 project_id = st.session_state.project_id
 show_project_header()
 
-# 📄 Upload references
-uploaded_file = st.file_uploader("Upload reference file (.csv or .ris)")
+# File upload
+uploaded_file = st.file_uploader("📄 Upload reference file (.csv or .ris)")
 if uploaded_file:
     if uploaded_file.name.endswith(".csv"):
         df = pd.read_csv(uploaded_file)
@@ -54,7 +55,7 @@ if uploaded_file:
         entries = rispy.load(uploaded_file)
         df = pd.DataFrame(entries)
     else:
-        st.error("Unsupported file type. Use .csv or .ris")
+        st.error("❌ Unsupported file type. Use .csv or .ris only.")
         df = None
 
     if df is not None:
@@ -64,4 +65,4 @@ if uploaded_file:
             ref_id = f"ref_{i}"
             save_reference(project_id, ref_id, row.to_dict())
         st.session_state[f"refs_{project_id}"] = df.to_dict(orient="records")
-        st.success("📤 References saved to Firestore")
+        st.success("📤 References saved to Firestore.")
